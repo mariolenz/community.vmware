@@ -203,10 +203,62 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
     return None
 
 
+# def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
+#     if not isinstance(obj_type, list):
+#         obj_type = [obj_type]
+# 
+#     name = name.strip()
+# 
+#     objects = get_all_objs(content, obj_type, folder=folder, recurse=recurse)
+#     for obj in objects:
+#         try:
+#             if unquote(obj.name) == name:
+#                 return obj
+#         except vmodl.fault.ManagedObjectNotFound:
+#             pass
+# 
+#     return None
+
+
 def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
+    obj = {}
+
     if not isinstance(obj_type, list):
         obj_type = [obj_type]
 
+    if not folder:
+        folder = content.rootFolder
+
+    view_ref = content.viewManager.CreateContainerView(folder, vimtype, recurse)
+
+    traversal_spec = vmodl.query.PropertyCollector.TraversalSpec()
+    traversal_spec.name = 'traverseEntries'
+    traversal_spec.path = 'view'
+    traversal_spec.skip = False
+    traversal_spec.type = view_ref.__class__
+
+    obj_spec = vmodl.query.PropertyCollector.ObjectSpec()
+    obj_spec.obj = view_ref
+    obj_spec.skip = True
+    obj_spec.selectSet = [traversal_spec]
+
+    prop_spec = vmodl.query.PropertyCollector.PropertySpec()
+    prop_spec.type = obj_type
+    prop_spec.all = True
+
+    filter_spec = vmodl.query.PropertyCollector.FilterSpec()
+    filter_spec.objectSet = obj_set
+    filter_spec.propSet = prop_set
+
+    collector = content.propertyCollector
+    props = collector.RetrieveProperties([filter_spec])
+
+    for managed_object_ref in container.view:
+        try:
+            obj.update({managed_object_ref: managed_object_ref.name})
+        except vmodl.fault.ManagedObjectNotFound:
+            pass
+    return obj
     name = name.strip()
 
     objects = get_all_objs(content, obj_type, folder=folder, recurse=recurse)
