@@ -6,20 +6,20 @@
     name: prepare_vmware_tests
 
 - name: create example toplevel folder
-  vcenter_folder:
+  vmware.vmware.folder:
     <<: &vcenter_folder_data
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ dc1 | basename }}"
+      folder_type: vm
       validate_certs: false
-    folder_name: "toplevel"
+    relative_path: "toplevel"
 
 - name: create an example child folder
-  vcenter_folder:
+  vmware.vmware.folder:
     <<: *vcenter_folder_data
-    folder_name: "child_folder"
-    parent_folder: "toplevel"
+    relative_path: "toplevel/child_folder"
 
 # Testcase 0001: Get details about folders
 - name: get info about folders
